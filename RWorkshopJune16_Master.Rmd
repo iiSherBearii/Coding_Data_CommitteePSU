@@ -1,0 +1,157 @@
+---
+title: "RWorkshopJune16"
+author: "AES"
+date: '2022-06-15'
+output: html_document
+---
+
+## This is our document for the R Workshop on Exploratory Data Analysis.
+
+
+### Before you can use a library (aka package of functions), you have to initially install the library/package
+```{r echo=FALSE}
+#install.packages("dplyr")
+#install.packages("corrplot")
+#install.packages("GGally")
+#install.packages("tidycensus")
+#install.packages("mapview)
+```
+
+
+### Load libraries
+```{r warning=FALSE,message=FALSE}
+library(dplyr)
+library(corrplot)
+library(GGally)
+library(tidycensus)
+library(mapview)
+```
+
+
+### Load mtcars (dataset we used last week with Joe Risi)
+```{r}
+data("mtcars")
+```
+
+
+### Basic info about the dataset
+```{r}
+nrow(mtcars) # number of rows
+ncol(mtcars) # number of columns
+head(mtcars) # first five rows
+tail(mtcars) # last five rows
+```
+
+
+### if you don't remember what a function is or you're stumped on how to use it:
+```{r}
+#?nrow
+```
+
+
+### summary() & associated functions
+summaries of data trends
+```{r}
+# initial look at our data
+summary(mtcars)
+
+# look at just one column of data
+summary(mtcars$mpg)
+
+# look at just one function of one column of data
+min(mtcars$mpg)
+max(mtcars$mpg)
+median(mtcars$mpg)
+mean(mtcars$mpg)
+sd(mtcars$mpg)
+```
+
+
+### table() & prop.table()
+engine types, gears, and types vs. gears
+```{r}
+table(mtcars$vs) # 14 with a straight engine
+table(mtcars$gear) # 15 with 3 gears, 12 with 4, 5 with 5
+table(mtcars$vs,mtcars$gear)
+
+# use prop.table() to see proportions
+prop.table(table(mtcars$vs))
+prop.table(table(mtcars$gear))
+prop.table(table(mtcars$vs,mtcars$gear))
+
+# prop.table requires a table as its input e.g., "table(mtcars$vs)"
+# instead of typing it all out, we could save this table as an object
+vs_tab <- table(mtcars$vs)
+vs_tab
+prop.table(vs_tab)
+
+# what are the tables below telling us?
+prop.table(table(mtcars$vs,mtcars$gear),1)
+prop.table(table(mtcars$vs,mtcars$gear),2)
+```
+
+
+### aggregate() & group_by()
+```{r}
+# let's say we want to know all the means of the data by engine type
+aggregate(mtcars,by=list(mtcars$vs),FUN=mean)
+
+# how do the gear groups differ in mpg?
+aggregate(mtcars$mpg,by=list(mtcars$gear),FUN=mean)
+
+# there are multiple ways to achieve the same thing! here's a tidyverse example:
+mtcars %>% group_by(gear) %>% summarise_at(vars(mpg),mean)
+```
+
+
+### hist() & boxplot() & plot()
+simple graphical representations of data
+```{r}
+hist(mtcars$mpg)
+
+boxplot(mpg ~ vs,mtcars)
+boxplot(mpg ~ gear,mtcars)
+
+# sometimes Rmd doesn't like adding stuff to plots. you'll have to run the next two lines manually in the console:
+plot(mpg ~ wt,mtcars)
+abline(lm(mpg ~ wt,mtcars))
+# if you "knit" this document, this code will work fine!
+```
+Megan and Anna will show how to make prettier and more useful plots in July!
+
+
+### cor() & corrplot() & ggpairs()
+```{r}
+cor(mtcars)
+#?cor # uses pearson method by default
+
+corrplot(cor(mtcars))
+
+# what types of options can we add to corrplot?
+corrplot(cor(mtcars),method="number")
+corrplot(cor(mtcars),method="color")
+corrplot(cor(mtcars),method="color",type="upper")
+
+# or maybe we only care about a couple variables:
+corrplot(cor(mtcars %>% select(mpg,vs,gear,wt)),method="color",type="upper")
+
+# ggpairs is a fancy function that combines a lot of the functions we talked about today:
+ggpairs(mtcars)
+```
+
+
+### tidycensus
+```{r}
+load_variables(2020, "acs5", cache = TRUE)
+
+get_acs(geography="county",state="PA",year=2020,variables = c("B01002_001"),geometry = TRUE)
+
+median_age_2020<-get_acs(geography="county",state="PA",year=2020,variables = c("B01002_001"),geometry = TRUE)
+
+mapview(median_age_2020, zcol="estimate")
+
+median_age_2020_tract<-get_acs(geography="tract",state="PA",year=2020,variables = c("B01002_001"),geometry = TRUE)
+
+mapview(median_age_2020_tract, zcol="estimate")
+```
+
